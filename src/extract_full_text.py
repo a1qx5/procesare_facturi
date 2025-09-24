@@ -8,7 +8,6 @@ def extract_text_from_pdf(pdf_path):
 
             full_text = ""
             for page_num, page in enumerate(pdf.pages):
-                print(f"\n--- Page {page_num + 1} ---")
                 page_text = page.extract_text()
                 if page_text:
                     full_text += page_text + "\n"
@@ -22,5 +21,5 @@ def extract_text_from_pdf(pdf_path):
 if __name__ == "__main__":
     pdf_file = r"mock-documents\invoice.pdf"
     text = extract_text_from_pdf(pdf_file)
-    print(f"{text}")
+    print(f"---Full Text---\n{text}")
     
