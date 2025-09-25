@@ -4,7 +4,7 @@ import pdfplumber
 def extract_text_from_pdf(pdf_path):
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            print(f"PDF has {len(pdf.pages)} pages")
+            # print(f"PDF has {len(pdf.pages)} pages")
 
             full_text = ""
             for page_num, page in enumerate(pdf.pages):
@@ -19,7 +19,7 @@ def extract_text_from_pdf(pdf_path):
 
 
 if __name__ == "__main__":
-    pdf_file = r"mock-documents\invoice.pdf"
+    pdf_file = r"mock-documents\invoice_eng.pdf"
     text = extract_text_from_pdf(pdf_file)
     print(f"---Full Text---\n{text}")
     
