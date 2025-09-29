@@ -29,9 +29,6 @@ PATTERNS = {
         r'Curs\s*1\s*EUR\s*=\s*([0-9]+\.[0-9]+)',
         r'Exchange\s*rate\s*1\s*EUR\s*=\s*([0-9]+\.[0-9]+)',
     ],
-    "IQID": [
-        r'IQID\s*:\s*([^\n]+)'
-    ]
     # "total_value_ron": [
     #     r'Total\s*value\s*[0-9]+\.[0-9]+\s*EUR\s*([0-9]+\.[0-9]+)\s*Lei',
     # ]
@@ -49,15 +46,31 @@ def extract_global_data(text):
         results[field] = value
     return results
 
+def extract_IQID_list(text):
+    IQID_list = []
+    start_pos = 0
+    while True:
+        IQID_match = re.search(r'IQID\s*:\s*([^\n]+)', text[start_pos:], re.IGNORECASE)
+        if IQID_match == None:
+            break
+        IQID_list.append(IQID_match.group(1))
+        start_pos += IQID_match.end()
+    return IQID_list
+
 def extract_products(text):
     product_list = []
     start_pos = 0
+    IQID_list = extract_IQID_list(text)
+    counter = 0
     while True:
         product_values_match = re.search(r'buc\s+\d+\s+\d+(?:\s\d+)*\.?\d*\s+(\d+(?:\s\d+)*\.?\d*)\s+(\d+(?:\s\d+)*\.?\d*)', text[start_pos:], re.IGNORECASE)
         if product_values_match == None:
             break
-
+        
         product = extract_global_data(text)
+
+        product['IQID'] = IQID_list[counter]
+        counter += 1
 
         product['value_without_vat'] = product_values_match.group(1).replace(' ', '')
 
@@ -69,8 +82,11 @@ def extract_products(text):
 
         print(product)
 
+        product_list.append(product)
 
         start_pos += product_values_match.end()
+
+    return product_list
         
 
 if __name__ == "__main__":
