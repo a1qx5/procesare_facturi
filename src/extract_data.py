@@ -21,20 +21,23 @@ PATTERNS = {
         r'-([Lei]{3})-',
         r'-([EUR]{3})-',
     ],
-    "total_value": [
-        r'TOTAL\s*PLATA\s*([0-9]+\.[0-9]+)',
-        r'Total\s*value\s*([0-9]+\.[0-9]+)',
-    ],
-    "exchange_rate" : [
+    # "total_value": [
+    #     r'TOTAL\s*PLATA\s*([0-9]+\.[0-9]+)',
+    #     r'Total\s*value\s*([0-9]+\.[0-9]+)',
+    # ],
+    "exchange_rate": [
         r'Curs\s*1\s*EUR\s*=\s*([0-9]+\.[0-9]+)',
         r'Exchange\s*rate\s*1\s*EUR\s*=\s*([0-9]+\.[0-9]+)',
     ],
-    "total_value_ron": [
-        r'Total\s*value\s*[0-9]+\.[0-9]+\s*EUR\s*([0-9]+\.[0-9]+)\s*Lei',
+    "IQID": [
+        r'IQID\s*:\s*([^\n]+)'
     ]
+    # "total_value_ron": [
+    #     r'Total\s*value\s*[0-9]+\.[0-9]+\s*EUR\s*([0-9]+\.[0-9]+)\s*Lei',
+    # ]
 }
 
-def extract_data(text):
+def extract_global_data(text):
     results = {}
     for field, patterns in PATTERNS.items():
         value = None
@@ -44,11 +47,35 @@ def extract_data(text):
                 value = match.group(1)
                 break
         results[field] = value
-    print(results)
+    return results
+
+def extract_products(text):
+    product_list = []
+    start_pos = 0
+    while True:
+        product_values_match = re.search(r'buc\s+\d+\s+\d+(?:\s\d+)*\.?\d*\s+(\d+(?:\s\d+)*\.?\d*)\s+(\d+(?:\s\d+)*\.?\d*)', text[start_pos:], re.IGNORECASE)
+        if product_values_match == None:
+            break
+
+        product = extract_global_data(text)
+
+        product['value_without_vat'] = product_values_match.group(1).replace(' ', '')
+
+        product['vat_value'] = product_values_match.group(2).replace(' ', '')
+
+        product['total_value'] = float(product['value_without_vat']) + float(product['vat_value'])
+
+        product['total_value_ron'] = round(product['total_value'], 2) if product['currency'] == "Lei" else round(float(product['total_value']) * float(product['exchange_rate']), 2)
+
+        print(product)
+
+
+        start_pos += product_values_match.end()
+        
 
 if __name__ == "__main__":
     print("\n---Romanian invoice---\n")
-    extract_data(extract_text_from_pdf("mock-documents/invoice.pdf"))
+    extract_products(extract_text_from_pdf("mock-documents/invoice.pdf"))
 
     print("\n---English Envoice---\n")
-    extract_data(extract_text_from_pdf("mock-documents/invoice_eng.pdf"))
+    extract_products(extract_text_from_pdf("mock-documents/invoice_eng.pdf"))

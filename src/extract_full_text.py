@@ -19,7 +19,11 @@ def extract_text_from_pdf(pdf_path):
 
 
 if __name__ == "__main__":
+    pdf_file = r"mock-documents\invoice.pdf"
+    text = extract_text_from_pdf(pdf_file)
+    print(f"---Full Text ROMANIAN---\n{text}\n\n\n\n")
+
     pdf_file = r"mock-documents\invoice_eng.pdf"
     text = extract_text_from_pdf(pdf_file)
-    print(f"---Full Text---\n{text}")
+    print(f"---Full Text ENGLISH---\n{text}")
     
