@@ -54,6 +54,17 @@ def allowed_file(filename):
 def web_validate_excel_columns(excel_path):
     """Web-friendly version of validate_excel_columns that doesn't use tkinter"""
     try:
+        # First, check if file exists and has content
+        if not os.path.exists(excel_path):
+            return False, "Excel file not found."
+        
+        file_size = os.path.getsize(excel_path)
+        if file_size == 0:
+            return False, "Excel file is empty (0 bytes)."
+        
+        if file_size < 100:  # Excel files are typically much larger
+            return False, "Excel file appears to be corrupted (too small)."
+        
         # Determine engine based on file extension
         if excel_path.lower().endswith('.xlsx'):
             engine = 'openpyxl'
@@ -62,7 +73,13 @@ def web_validate_excel_columns(excel_path):
         else:
             return False, "Unsupported Excel file format. Please use .xlsx or .xls files."
         
+        # Try to read the Excel file
         df = pd.read_excel(excel_path, engine=engine)
+        
+        # Check if the DataFrame is empty
+        if df.empty:
+            return False, "Excel file contains no data."
+        
         existing_columns = list(df.columns)
         missing_columns = [col for col in REQUIRED_COLUMNS if col not in existing_columns]
         
@@ -70,6 +87,7 @@ def web_validate_excel_columns(excel_path):
             return False, f"Missing required columns: {', '.join(missing_columns)}"
         
         return True, df
+        
     except ImportError as e:
         if 'openpyxl' in str(e):
             return False, "Missing openpyxl library. Please install it to read .xlsx files."
@@ -77,8 +95,18 @@ def web_validate_excel_columns(excel_path):
             return False, "Missing xlrd library. Please install it to read .xls files."
         else:
             return False, f"Missing required library: {str(e)}"
+    except pd.errors.EmptyDataError:
+        return False, "Excel file is empty or contains no readable data."
     except Exception as e:
-        return False, f"Failed to read Excel file: {str(e)}"
+        error_msg = str(e).lower()
+        if "no valid workbook part" in error_msg:
+            return False, "Invalid Excel file format. The file may be corrupted, renamed from another format, or not a real Excel file. Please check the file and try again."
+        elif "corrupted" in error_msg or "invalid" in error_msg:
+            return False, "Excel file appears to be corrupted. Please try saving it again from Excel."
+        elif "permission" in error_msg:
+            return False, "Permission denied reading Excel file. Make sure the file is not open in Excel."
+        else:
+            return False, f"Failed to read Excel file: {str(e)}"
 
 def web_check_duplicate_invoice(df, invoice_id):
     """Web-friendly version of check_duplicate_invoice that doesn't use tkinter"""
