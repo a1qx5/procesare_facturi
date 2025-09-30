@@ -11,8 +11,8 @@ PATTERNS = {
         r'Issue\s*date[:\s]*([\d/]+)',
     ],
     "cif": [
-        r'CIF:\s*RO24386686\s*CIF[:\s]*([A-Z0-9]+)',
-        r'VAT\s*CODE:\s*RO24386686\s*VAT\s*CODE[:\s]*([A-Z0-9]+)',
+        r'CIF[:\s]*(?!RO24386686)([A-Z0-9]+)',
+        r'VAT\s*CODE:\s*(?!RO24386686)([A-Z0-9]+)',
     ],
     "client": [
         r'ADVANCED\s*IDEAS\s*STUDIO\s*S\.R\.L\.\s*([^\n]+)',
@@ -78,7 +78,12 @@ def extract_products(text):
 
         product['total_value'] = float(product['value_without_vat']) + float(product['vat_value'])
 
-        product['total_value_ron'] = round(product['total_value'], 2) if product['currency'] == "Lei" else round(float(product['total_value']) * float(product['exchange_rate']), 2)
+        if product['currency'] == "Lei":
+            product['total_value_ron'] = product['total_value']
+        elif product['exchange_rate']:
+            product['total_value_ron'] = round(float(product['total_value']) * float(product['exchange_rate']), 2)
+        else:
+            product['total_value_ron'] = "Missing Exchange Rate"
 
         print(product)
 

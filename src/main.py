@@ -78,8 +78,31 @@ def validate_excel_columns(excel_path):
         messagebox.showerror("Error", f"Failed to read Excel file: {str(e)}")
         return False, None
 
+def check_duplicate_invoice(df, invoice_id):
+    if 'Factura' in df.columns and not df.empty:
+        existing_invoices = df['Factura'].tolist()
+        if invoice_id in existing_invoices:
+            messagebox.showwarning(
+                "Duplicate Invoice",
+                f"Invoice '{invoice_id}' already exists in the Excel file!\n\n"
+                f"The invoice will not be added to avoid duplicates."
+            )
+            return True
+    return False
+
 def create_new_excel_dataframe():
     return pd.DataFrame(columns=REQUIRED_COLUMNS)
+
+def save_excel_with_formatting(df, file_path):
+    column_widths = [6, 10, 11.5, 30, 13, 7, 27, 7.5, 15, 15, 15, 9, 20]
+    
+    with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+        worksheet = writer.sheets['Sheet1']
+        
+        for i, width in enumerate(column_widths):
+            col_letter = chr(65 + i)
+            worksheet.set_column(f'{col_letter}:{col_letter}', width)
 
 def add_items_to_excel(df, products):
     new_rows = []
@@ -98,7 +121,7 @@ def add_items_to_excel(df, products):
             "Valoare fara TVA": float(product.get('value_without_vat', '')),
             "Valoare TVA": float(product.get('vat_value', '')),
             "Valoare Totala": product.get('total_value', ''),
-            "CURS BNR": float(product.get('exchange_rate', '')),
+            "CURS BNR": float(product.get('exchange_rate', '')) if product.get('exchange_rate', '') else "-",
             "Valoare Totala(RON)": product.get('total_value_ron', '')
         }
         new_rows.append(row)
@@ -109,7 +132,6 @@ def add_items_to_excel(df, products):
     return result_df
 
 def main():
-    
     pdf_path = select_pdf_file()
     if not pdf_path:
         return
@@ -122,6 +144,8 @@ def main():
             messagebox.showerror("Error", "No products found in the PDF!")
             return
         
+        invoice_id = products[0].get('id', '') if products else ''
+        
     except Exception as e:
         messagebox.showerror("Error", f"Failed to extract data from PDF: {str(e)}")
         return
@@ -130,7 +154,6 @@ def main():
     
     if create_new:
         df = create_new_excel_dataframe()
-        
         save_path = get_save_path()
         if not save_path:
             return
@@ -143,12 +166,14 @@ def main():
         if not valid:
             return
         
+        if check_duplicate_invoice(df, invoice_id):
+            return
+        
         save_path = excel_path
     
     try:
         final_df = add_items_to_excel(df, products)
-        
-        final_df.to_excel(save_path, index=False)
+        save_excel_with_formatting(final_df, save_path)
         
         messagebox.showinfo(
             "Success!",
