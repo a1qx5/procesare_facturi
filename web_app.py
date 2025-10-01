@@ -1,9 +1,11 @@
+
 from flask import Flask, request, render_template, flash, redirect, url_for, send_file, session
 import os
 import sys
 import tempfile
 import pandas as pd
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 
 # Add the src directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -20,17 +22,15 @@ from main import (
 from extract_data import extract_products
 from extract_full_text import extract_text_from_pdf
 
+
+load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Use system temp directory instead of uploads folder
 TEMP_FOLDER = tempfile.gettempdir()
 ALLOWED_EXTENSIONS = {'pdf', 'xlsx', 'xls'}
-
-app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
