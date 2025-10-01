@@ -10,7 +10,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import well-tested functions from main.py
 from main import (
-    REQUIRED_COLUMNS, 
+    REQUIRED_COLUMNS,
+    validate_excel_columns,
+    check_duplicate_invoice,
     create_new_excel_dataframe,
     add_items_to_excel,
     save_excel_with_formatting
@@ -26,23 +28,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 TEMP_FOLDER = tempfile.gettempdir()
 ALLOWED_EXTENSIONS = {'pdf', 'xlsx', 'xls'}
 
-# Import all the well-tested functions from main.py
-from main import (
-    REQUIRED_COLUMNS, 
-    validate_excel_columns, 
-    check_duplicate_invoice,
-    create_new_excel_dataframe,
-    add_items_to_excel,
-    save_excel_with_formatting
-)
-from extract_data import extract_products
-from extract_full_text import extract_text_from_pdf
-
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-ALLOWED_EXTENSIONS = {'pdf', 'xlsx', 'xls'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
